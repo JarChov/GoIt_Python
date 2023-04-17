@@ -151,9 +151,9 @@ def delete_folder() -> None:
         try:
             folder.rmdir()
         except OSError:
-            print(f'Folder {folder} can not be deleted')
+            print(f'Sorry, we can not delete the folder: {folder}')
 
-# added some text
+
 if __name__ == '__main__':
     # path = Path('for_test')
     path = Path(sys.argv[1])

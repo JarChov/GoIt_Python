@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clean_folder_YarCho"
+version = "1.0.1"
+authors = [
+    {name = "Yaroslav Chovniuk", email = "yaroslawchovnyuk@gmail.com"},
+]
+description = "Sorting file according it's types"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3"]
+
