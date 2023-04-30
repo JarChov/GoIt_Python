@@ -8,43 +8,43 @@ def input_error(func):
             return result
         except KeyError:
             return 'Enter user name'
-        except ValueError:
+        except (TypeError, ValueError):
             return 'Give me name and phone please'
         except IndexError:
             return 'Enter user name'
     return wrapper
 
 
-def exit_func(_):
+def exit_func():
     return
 
 
-def greetings(_):
+def greetings():
     return 'How can I help you?'
 
 
 @input_error
-def user_adding(args):
-    user_name, user_phone = args
-    users[user_name] = user_phone
-    return f'User {user_name} with number {user_phone} successfully added'
+def user_adding(user_name, user_phone):
+    if user_name in users:
+        return f'User {user_name} already exist'
+    else:
+        users[user_name] = user_phone
+        return f'User {user_name} with number {user_phone} successfully added'
 
 
 @input_error
-def phone_changing(args):
-    user_name, user_phone = args
+def phone_changing(user_name, user_phone):
     if user_name in users.keys():
         users[user_name] = user_phone
     return f'For user {user_name} number successfully changed to {user_phone}'
 
 
 @input_error
-def phone_shower(args):
-    user_name, *args = args
+def phone_shower(user_name):
     return f'User {user_name} have phone number: {users[user_name]}'
 
 
-def show_all(_):
+def show_all():
     all_user = ''
     for k, v in users.items():
         all_user += f'User {k} phone number: {v}\n'
@@ -72,13 +72,33 @@ def command_parser(input_value):
             command = command + ' ' + args[0]
             args = args[1:]
             handler = COMMANDS.get(command.lower())
-    return handler, args
+            user_name = None
+            user_phone = None
+            return handler, user_name, user_phone
+    else:
+        if len(args) >= 2:
+            user_name, user_phone = args[0], args[1]
+        elif len(args) == 1:
+            user_name = args[0]
+            user_phone = None
+        else:
+            handler = COMMANDS[command.lower()]
+            user_name = None
+            user_phone = None
+        return handler, user_name, user_phone
 
 
 def main():
     while True:
-        handler, *args = command_parser(input(f'Enter a command please: '))
-        result = handler(*args)
+        handler, user_name, user_phone, *args = command_parser(input(f'Enter a command please: '))
+
+        if not user_name and not user_phone:
+            result = handler()
+        elif not user_phone:
+            result = handler(user_name)
+        else:
+            result = handler(user_name, user_phone)
+
         if not result:
             print('Good bye!')
             break
