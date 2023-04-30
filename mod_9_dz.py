@@ -67,15 +67,14 @@ def command_parser(input_value):
     command, *args = input_value.split()
     try:
         handler = COMMANDS[command.lower()]
+
     except KeyError:
         if args:
             command = command + ' ' + args[0]
             args = args[1:]
             handler = COMMANDS.get(command.lower())
-            user_name = None
-            user_phone = None
-            return handler, user_name, user_phone
-    else:
+
+    finally:
         if len(args) >= 2:
             user_name, user_phone = args[0], args[1]
         elif len(args) == 1:
