@@ -125,7 +125,7 @@ class ContactsIterable:
         # self.contacts_page = []
 
     def __next__(self):
-        if self.contacts_counter < len(self.contacts): # TODO: можливо переробити page на dict
+        if self.contacts_counter < len(self.contacts):
             contacts_page = self.contacts[self.contacts_counter:min(self.contacts_counter + self.N, len(self.contacts))]
             self.contacts_counter += self.N
             return contacts_page
