@@ -1,30 +1,92 @@
 from collections import UserDict
+from datetime import datetime
+import re
+
+
+class WrongName(Exception):
+    pass
+
+
+class WrongPhone(Exception):
+    pass
+
+
+class WrongBd(Exception):
+    pass
 
 
 class Field():
     def __init__(self, value):
+        self.__value = None
+
         self.value = value
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
+        self.__value = value
 
     def __str__(self) -> str:
         return self.value
 
-    def __repr__(self) -> str:
-        return str(self)
 
-
+# @error_handler
 class Name(Field):
-    pass
+    def __init__(self, value):
+        super().__init__(value)
+
+    @Field.value.setter
+    def value(self, value):
+        if isinstance(value, str) and len(value) > 2:
+            Field.value.fset(self, value)
+        else:
+            raise WrongName
+
+    def __repr__(self):
+        return f'Name: {self.value}'
 
 
 class Phone(Field):
-    pass
+    def __init__(self, value):
+        super().__init__(value)
+
+    @Field.value.setter
+    def value(self, value):
+        phone_field = re.findall(r'\d', value)
+        if len(phone_field) == 10 or len(phone_field) == 12:
+            Field.value.fset(self, value)
+        else:
+            raise WrongPhone
+
+    def __repr__(self):
+        return f'Phone:  {self.value}'
+
+
+class Birthday(Field):
+    def __init__(self, value):
+        super().__init__(value)
+
+    @Field.value.setter
+    def value(self, value):
+        bd_field = re.findall(r'\d', value)
+        if len(bd_field) == 8:
+            Field.value.fset(self, value)
+        else:
+            raise WrongBd
+
+    def __repr__(self):
+        return f'Birthday{self.value}'
 
 
 class Record():
 
-    def __init__(self, name, phone=None):
+    def __init__(self, name: Name, phone: Phone = None, birthday: Birthday = None):
         self.name = name
         self.phones = []
+        self.birthday = birthday
         if phone:
             self.phones.append(phone)
 
@@ -37,16 +99,37 @@ class Record():
                 self.phones.remove(phone_num)
                 self.phones.append(new_phone_num)
 
-        # if old_phone_num in self.phones:
-        #     self.phones.remove(old_phone_num)
-        #     self.phones.append(new_phone_num)
-
     def delete_phone(self, phone):
         for phone_num in self.phones:
             if phone_num.value == phone.value:
                 self.phones.remove(phone_num)
-        # if phone in self.phones:
-        #     self.phones.remove(phone)
+
+    def days_to_birthday(self):
+        if self.birthday:
+            user_bd = datetime.strptime(str(self.birthday).replace('-', ' '), '%d %m %Y')
+
+            if int(datetime.now().month) >= int(user_bd.month) and int(datetime.now().day) > int(user_bd.day):
+                user_bd = datetime(datetime.now().year + 1, user_bd.month, user_bd.day)
+            elif int(datetime.now().month) == int(user_bd.month) and int(datetime.now().day) == int(user_bd.day):
+                return f'0 days'
+            else:
+                user_bd = datetime(datetime.now().year, user_bd.month, user_bd.day)
+            return f'{(user_bd - datetime.now()).days} days'
+
+
+class ContactsIterable:
+    def __init__(self, contacts, N=2):
+        self.contacts = contacts
+        self.N = N
+        self.contacts_counter = 0
+        # self.contacts_page = []
+
+    def __next__(self):
+        if self.contacts_counter < len(self.contacts): # TODO: можливо переробити page на dict
+            contacts_page = self.contacts[self.contacts_counter:min(self.contacts_counter + self.N, len(self.contacts))]
+            self.contacts_counter += self.N
+            return contacts_page
+        raise StopIteration
 
 
 class AddressBook(UserDict):
@@ -54,36 +137,51 @@ class AddressBook(UserDict):
     def add_record(self, record: Record):
         self.data[record.name.value] = record
 
+    def __iter__(self):
+        return ContactsIterable(list(self.data.values())) # TODO: необхідно передавати N записів на сторінку
+
 
 if __name__ == '__main__':
     # For testing:
-    name = Name('Some_name')
+    name = Name('some_name')
+    name_1 = Name('some_name_1')
+    name_2 = Name('some_name_2')
     phone_1 = Phone('380631234567')
     phone_2 = Phone('0639876543')
-    phone_3 = Phone('0333')
-    # print(phone_1, phone_2)
+    phone_3 = Phone('0333111111')
+    birthday = Birthday('15-05-2000')
+
 
     # Creating a record
-    record_1 = Record(name, phone_1)
-    print(record_1)
+    record_1 = Record(name, phone_1, birthday)
+    record_2 = Record(name_1, phone_1, birthday)
+    record_3 = Record(name_2, phone_3, birthday)
+    # print(record_1)
 
     # Method add_phone
     record_1.add_phone(phone_2)
     record_1.add_phone(phone_3)
-    print(record_1.phones)
+    # print(record_1.phones)
 
     # Method delete_phone
     record_1.delete_phone(phone_2)
-    print(record_1.phones)
+    # print(record_1.phones)
 
     # Method change_phone
-    record_1.change_phone(phone_1, Phone('06755555555'))
-    print(record_1.phones)
+    record_1.change_phone(phone_1, Phone('0675555555'))
+    # print(record_1.phones)
+
+    # Method days to birthday
+    print(record_1.days_to_birthday())
 
     # Method update dict
     user_dict = AddressBook()
     user_dict.add_record(record_1)
+    user_dict.add_record(record_2)
+    user_dict.add_record(record_3)
     # print(user_dict.data)
     record = user_dict.data.get(name.value)
-    print(record.phones)
+    # print(record.name, record.phones, record.birthday)
+    print(user_dict)
+    print(ContactsIterable(list(user_dict), 5).__next__())
 
