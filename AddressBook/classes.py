@@ -138,7 +138,7 @@ class AddressBook(UserDict):
         self.data[record.name.value] = record
 
     def __iter__(self):
-        return ContactsIterable(list(self.data.values())) # TODO: необхідно передавати N записів на сторінку
+        return ContactsIterable(list(self.data.values()))
 
 
 if __name__ == '__main__':
