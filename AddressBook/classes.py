@@ -1,6 +1,7 @@
 from collections import UserDict
 from datetime import datetime
 import re
+import csv
 
 
 class WrongName(Exception):
@@ -33,7 +34,6 @@ class Field():
         return self.value
 
 
-# @error_handler
 class Name(Field):
     def __init__(self, value):
         super().__init__(value)
@@ -134,11 +134,56 @@ class ContactsIterable:
 
 class AddressBook(UserDict):
 
+    def __iter__(self):
+        return ContactsIterable(list(self.data.values()))
+
     def add_record(self, record: Record):
         self.data[record.name.value] = record
 
-    def __iter__(self):
-        return ContactsIterable(list(self.data.values()))
+    def search(self, input_data):
+        search_result = {}
+        for k, v in self.data.items():
+            # print(k, v.phones)
+            for phone in v.phones:
+                if input_data in k or input_data in str(phone):
+                    search_result[k] = v
+        return search_result
+
+    def save_record_to_file(self) -> None:
+
+        with open('user_book.csv', 'w', encoding='utf-8') as ub:
+            field_names = ['User name', 'User phone-1', 'User phone-2', 'User birthday']
+            writer = csv.DictWriter(ub, fieldnames=field_names)
+            writer.writeheader()
+            for page in self:
+                # print(page)
+                for contact in page:
+                    if len(contact.phones) == 1 and contact.birthday:
+                        writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
+                                     'User phone-2': None, 'User birthday': contact.birthday})
+                    elif len(contact.phones) == 1 and not contact.birthday:
+                        writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
+                                     'User phone-2': None, 'User birthday': None})
+                    else:
+                        writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
+                                     'User phone-2': contact.phones[1], 'User birthday': contact.birthday})
+
+    def open_record_from_file(self):
+        with open('user_book.csv', 'r') as ub:
+            reader = csv.DictReader(ub)
+            for row in reader:
+                if row['User birthday'] == '':
+                    restored_record = Record(Name(row['User name']), Phone(row['User phone-1']))
+                else:
+                    restored_record = Record(Name(row['User name']), Phone(row['User phone-1']),
+                                             Birthday(row['User birthday']))
+                if row['User phone-2']:
+                    restored_record.add_phone(row['User phone-2'])
+
+                self.add_record(restored_record)
+            return self
+
+
 
 
 if __name__ == '__main__':
@@ -162,6 +207,8 @@ if __name__ == '__main__':
     record_1.add_phone(phone_2)
     record_1.add_phone(phone_3)
     # print(record_1.phones)
+    # for phone in record_1.phones:
+    #     print(phone)
 
     # Method delete_phone
     record_1.delete_phone(phone_2)
@@ -172,7 +219,7 @@ if __name__ == '__main__':
     # print(record_1.phones)
 
     # Method days to birthday
-    print(record_1.days_to_birthday())
+    # print(record_1.days_to_birthday())
 
     # Method update dict
     user_dict = AddressBook()
@@ -181,7 +228,20 @@ if __name__ == '__main__':
     user_dict.add_record(record_3)
     # print(user_dict.data)
     record = user_dict.data.get(name.value)
-    # print(record.name, record.phones, record.birthday)
-    print(user_dict)
-    print(ContactsIterable(list(user_dict), 5).__next__())
+
+    # Find method
+    new_user_dict = AddressBook()
+    new_user_dict.open_record_from_file()
+    find_data = '123'
+
+    find_dict = new_user_dict.search(find_data)
+    print(find_dict)
+
+
+    # user_dict.save_record_to_file()
+    # print(f'user_dist: {user_dict}')
+    # print(ContactsIterable(list(user_dict), 5).__next__())
+    # user_dict_saved = AddressBook()
+    # user_dict_saved = AddressBook.open_record_from_file
+    # print(user_dict_saved)
 

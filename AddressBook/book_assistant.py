@@ -1,7 +1,14 @@
 from classes import *
 
 
-users = AddressBook()
+# Перевірка чи файл адресної книги існує
+try:
+    file = open('user_book.csv')
+except IOError:
+    users = AddressBook()
+else:
+    users = AddressBook()
+    users.open_record_from_file()
 
 
 def input_error(func):
@@ -12,7 +19,7 @@ def input_error(func):
         except WrongName:
             return 'User name should be at least 2 letter'
         except WrongPhone:
-            return 'User phone number should be with len 10 or 12'
+            return 'User phone number should be at format +380xxxxxxx'
         except KeyError:
             return 'Enter user name'
         except (TypeError, ValueError):
@@ -39,10 +46,12 @@ def user_adding(user_name, user_phone):
         record = users.pop(user_name.value)
         record.add_phone(user_phone)
         users.add_record(record)
+        # users.save_record_to_file(record)
         return f'For user {user_name} added new phone number {user_phone}'
     else:
         record = Record(user_name, user_phone)
         users.add_record(record)
+        # users.save_record_to_file(record)
         return f'User {user_name} with number {user_phone} successfully added'
 
 
@@ -82,7 +91,6 @@ def delete(user_name, user_phone):
         record.delete_phone(user_phone)
         users.add_record(record)
         return f'For user {user_name.value} phone number {user_phone} successfully deleted'
-
 
 
 @input_error
@@ -136,6 +144,22 @@ def days_to_bd(user_name):
         return f'For birthday of user {user_name.value} left {users.data.get(user_name.value).days_to_birthday()}'
 
 
+def finder(user_data: str):
+    founded_data = users.search(user_data)
+    all_user = ''
+    phones_num = ''
+    for records in founded_data.values():
+        if len(records.phones) == 1:
+            all_user += f'User {records.name} phone number: {records.phones[0]} birthday {records.birthday}\n'
+        else:
+            for phone in records.phones:
+                phones_num += str(phone) + '; '
+            all_user += f"User {records.name} phone number's: {phones_num.removesuffix('; ')}" \
+                        f" birthday {records.birthday}\n"
+
+    return all_user
+
+
 COMMANDS = {
     'hello': greetings,
     'add': user_adding,
@@ -145,6 +169,7 @@ COMMANDS = {
     'delete': delete,
     'birthday add': add_birthday,
     'birthday left': days_to_bd,
+    'find': finder,
     'good bye': exit_func,
     'close': exit_func,
     'exit': exit_func,
@@ -192,6 +217,8 @@ def main():
 
         if not result:
             print('Good bye!')
+            users.save_record_to_file()
+            # print(users)
             break
         print(result)
 
