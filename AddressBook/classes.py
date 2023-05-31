@@ -156,17 +156,26 @@ class AddressBook(UserDict):
             writer = csv.DictWriter(ub, fieldnames=field_names)
             writer.writeheader()
             for page in self:
-                # print(page)
                 for contact in page:
-                    if len(contact.phones) == 1 and contact.birthday:
-                        writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
-                                     'User phone-2': None, 'User birthday': contact.birthday})
-                    elif len(contact.phones) == 1 and not contact.birthday:
-                        writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
-                                     'User phone-2': None, 'User birthday': None})
-                    else:
-                        writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
-                                     'User phone-2': contact.phones[1], 'User birthday': contact.birthday})
+                    itphones = iter(contact.phones)
+
+                    data = {
+                        'User name': contact.name.value,
+                        'User phone-1': next(itphones, None),
+                        'User phone-2': next(itphones, None),
+                        'User birthday': contact.birthday
+                        }
+                    writer.writerow(data)
+
+                    # if len(contact.phones) == 1 and contact.birthday:
+                    #     writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
+                    #                  'User phone-2': None, 'User birthday': contact.birthday})
+                    # elif len(contact.phones) == 1 and not contact.birthday:
+                    #     writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
+                    #                  'User phone-2': None, 'User birthday': None})
+                    # else:
+                    #     writer.writerow({'User name': contact.name.value, 'User phone-1': contact.phones[0],
+                    #                  'User phone-2': contact.phones[1], 'User birthday': contact.birthday})
 
     def open_record_from_file(self):
         with open('user_book.csv', 'r') as ub:
